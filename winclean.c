@@ -22,9 +22,23 @@ static CleanTarget g_targets[] = {
 };
 
 static int g_dryRun = 0;
+static int g_verbose = 0;
 static int g_targetCount = sizeof(g_targets) / sizeof(g_targets[0]);
 static unsigned long long g_totalBytes = 0;
 static unsigned long g_totalFiles = 0;
+
+static const char* formatBytes(unsigned long long bytes) {
+    static char buf[32];
+    if (bytes >= (1ULL << 30))
+        snprintf(buf, sizeof(buf), "%.2f GB", (double)bytes / (1ULL << 30));
+    else if (bytes >= (1ULL << 20))
+        snprintf(buf, sizeof(buf), "%.2f MB", (double)bytes / (1ULL << 20));
+    else if (bytes >= (1ULL << 10))
+        snprintf(buf, sizeof(buf), "%.2f KB", (double)bytes / (1ULL << 10));
+    else
+        snprintf(buf, sizeof(buf), "%llu B", bytes);
+    return buf;
+}
 
 static int dirExists(const char* path) {
     DWORD attr = GetFileAttributesA(path);
@@ -88,11 +102,14 @@ static int deletePath(const char* path, unsigned long long* bytes, unsigned long
                 if (deleteFile(child)) {
                     g_totalBytes += sz;
                     g_totalFiles++;
+                    if (g_verbose) printf("  [del] %s (%s)\n", child, formatBytes(sz));
+                } else if (g_verbose) {
+                    printf("  [skip] %s (in use or locked)\n", child);
                 }
             } else {
                 g_totalBytes += sz;
                 g_totalFiles++;
-                printf("  [dry] %s (%llu bytes)\n", child, sz);
+                printf("  [dry] %s (%s)\n", child, formatBytes(sz));
             }
         }
     } while (FindNextFileA(h, &ffd));
@@ -116,7 +133,8 @@ static void printHelp(void) {
     printf("  -h, --help     Show this help\n");
     printf("  -d, --dry      Dry run (list files, do not delete)\n");
     printf("  -a, --all      Enable all targets including optional ones\n");
-    printf("  -l, --list     List available targets and exit\n\n");
+    printf("  -l, --list     List available targets and exit\n");
+    printf("  -v, --verbose  Show each file as it is processed\n\n");
     printf("Targets:\n");
     for (int i = 0; i < g_targetCount; i++) {
         printf("  [%d] %-18s %s\n", i, g_targets[i].name,
@@ -136,6 +154,8 @@ int main(int argc, char** argv) {
             for (int j = 0; j < g_targetCount; j++) g_targets[j].enabled = 1;
         } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0) {
             listOnly = 1;
+        } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+            g_verbose = 1;
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             printHelp();
@@ -194,10 +214,10 @@ int main(int argc, char** argv) {
 
     printf("\n========================================\n");
     if (g_dryRun)
-        printf("Dry run total: %lu files, %llu bytes would be removed.\n",
-               g_totalFiles, g_totalBytes);
+        printf("Dry run total: %lu files, %s would be removed.\n",
+               g_totalFiles, formatBytes(g_totalBytes));
     else
-        printf("Total removed: %lu files, %llu bytes.\n", g_totalFiles, g_totalBytes);
+        printf("Total removed: %lu files, %s.\n", g_totalFiles, formatBytes(g_totalBytes));
 
     return 0;
 }
