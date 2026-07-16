@@ -11,6 +11,8 @@ Recycle Bin.
 - Dry-run mode to preview what would be deleted
 - Verbose mode to log every file as it is processed
 - Human-readable size totals (B / KB / MB / GB)
+- Show processes based on Memory and CPU usage
+- Can kill processes with elevated privileges
 
 ## Build
 
@@ -33,6 +35,7 @@ winclean [options]
 | `-a, --all`      | Enable all targets, including optional ones          |
 | `-l, --list`     | List available targets and exit                      |
 | `-v, --verbose`  | Show each file as it is processed                    |
+| `-p, --processes | Show running processes                               |
 
 ### Examples
 
