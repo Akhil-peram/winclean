@@ -35,7 +35,7 @@ winclean [options]
 | `-a, --all`      | Enable all targets, including optional ones          |
 | `-l, --list`     | List available targets and exit                      |
 | `-v, --verbose`  | Show each file as it is processed                    |
-| `-p, --processes | Show running processes                               |
+| `-p, --processes` | Show running processes                               |
 
 ### Examples
 
